@@ -1,0 +1,9 @@
+{
+  "remoteHost": "your-remote-host.convex.cloud",
+  "npm": {
+    "dependencies": [
+      "convex-helpers",
+      "openai"
+    ]
+  }
+}
