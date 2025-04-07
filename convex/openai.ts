@@ -121,7 +121,7 @@ export const suggestMissingSubItemsWithAi = action({
     //create the todos
     if (messageContent) {
       const items = JSON.parse(messageContent)?.todos ?? [];
-      const AI_LABEL_ID = "k57exc6xrw3ar5e1nmab4vnbjs6v1m4p";
+      const AI_LABEL_ID = "k17amkrp6rc8ss2jy0erf4hbxn72vfma";
 
       for (let i = 0; i < items.length; i++) {
         const { taskName, description } = items[i];
