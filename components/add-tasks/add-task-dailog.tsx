@@ -1,37 +1,35 @@
+import { api } from "@/convex/_generated/api";
 import { Doc } from "@/convex/_generated/dataModel";
+import { useMutation, useQuery } from "convex/react";
+import { format } from "date-fns";
+import { Calendar, ChevronDown, Flag, Hash, Tag, Trash2 } from "lucide-react";
+import { useEffect, useState } from "react";
+import Task from "../todos/task";
 import {
   DialogContent,
   DialogDescription,
-  DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from "../ui/dialog";
-import { Button } from "../ui/button";
 import { Label } from "../ui/label";
-import { Calendar, ChevronDown, Flag, Hash, Tag, Trash2 } from "lucide-react";
-import { format } from "date-fns";
-import { useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { useEffect, useState } from "react";
-import Task from "../todos/task";
 import { AddTaskWrapper } from "./add-task-button";
 import SuggestMissingTasks from "./suggest-tasks";
-import { deleteATodo } from "@/convex/todos";
 import { useToast } from "../ui/use-toast";
 
-export default function AddTaskDialog({ data }: { data: Doc<"todos"> }) {
-  const { taskName, description, projectId, labelId, priority, dueDate, _id } =
-    data;
+export default function AddTaskDailog({
+  data,
+}: {
+  data: Doc<"todos">;
+}) {
+  const { toast } = useToast();
+  const { taskName, description, projectId, labelId, priority, dueDate, _id } = data;
   const project = useQuery(api.projects.getProjectByProjectId, { projectId });
   const label = useQuery(api.labels.getLabelByLabelId, { labelId });
-
-  const { toast } = useToast();
-
   const inCompletedSubtodosByProject =
-    useQuery(api.subTodos.inCompleteSubTodos, { parentId: _id }) ?? [];
+  useQuery(api.subTodos.inCompleteSubTodos, {parentId: _id }) ?? [];
 
   const completedSubtodosByProject =
-    useQuery(api.subTodos.completedSubTodos, { parentId: _id }) ?? [];
+  useQuery(api.subTodos.completedSubTodos, {parentId: _id }) ?? [];
 
   const checkASubTodoMutation = useMutation(api.subTodos.checkASubTodo);
   const unCheckASubTodoMutation = useMutation(api.subTodos.unCheckASubTodo);
@@ -47,28 +45,29 @@ export default function AddTaskDialog({ data }: { data: Doc<"todos"> }) {
       {
         labelName: "Project",
         value: project?.name || "",
-        icon: <Hash className="w-4 h-4 text-primary capitalize" />,
+        icon: <Hash className="h-4 w-4 text-primary capitalize" />,
       },
       {
         labelName: "Due date",
         value: format(dueDate || new Date(), "MMM dd yyyy"),
-        icon: <Calendar className="w-4 h-4 text-primary capitalize" />,
+        icon: <Calendar className="h-4 w-4 text-primary capitalize" />,
       },
       {
         labelName: "Priority",
         value: priority?.toString() || "",
-        icon: <Flag className="w-4 h-4 text-primary capitalize" />,
+        icon: <Flag className="h-4 w-4 text-primary capitalize" />,
       },
       {
         labelName: "Label",
         value: label?.name || "",
-        icon: <Tag className="w-4 h-4 text-primary capitalize" />,
+        icon: <Tag className="h-4 w-4 text-primary capitalize" />,
       },
     ];
+
     if (data) {
       setTodoDetails(data);
     }
-  }, [dueDate, label?.name, priority, project]);
+  }, [dueDate, priority, label?.name, project]);
 
   const handleDeleteTodo = (e: any) => {
     e.preventDefault();
@@ -87,11 +86,12 @@ export default function AddTaskDialog({ data }: { data: Doc<"todos"> }) {
         <DialogTitle>{taskName}</DialogTitle>
         <DialogDescription>
           <p className="my-2 capitalize">{description}</p>
-          <div className="flex items-center gap-1 mt-12 border-b-2 border-gray-100 pb-2 flex-wrap sm:justify-between lg:gap-0 ">
+          <div className="flex items-center gap-1 mt-12 border-b-2 border-gray-100 pb-2 flex-wrap sm:justify-between lg:gap-0">
             <div className="flex gap-1">
               <ChevronDown className="w-5 h-5 text-primary" />
               <p className="font-bold flex text-sm text-gray-900">Sub-tasks</p>
             </div>
+            <div>
             <div>
               <SuggestMissingTasks
                 projectId={projectId}
@@ -100,6 +100,7 @@ export default function AddTaskDialog({ data }: { data: Doc<"todos"> }) {
                 parentId={_id}
                 isSubTask={true}
               />
+            </div>
             </div>
           </div>
           <div className="pl-4">
@@ -116,7 +117,7 @@ export default function AddTaskDialog({ data }: { data: Doc<"todos"> }) {
               );
             })}
             <div className="pb-4">
-              <AddTaskWrapper parentTask={data} />
+              <AddTaskWrapper parentTask={data}/>
             </div>
             {completedSubtodosByProject.map((task) => {
               return (
@@ -140,7 +141,7 @@ export default function AddTaskDialog({ data }: { data: Doc<"todos"> }) {
             className="grid gap-2 p-4 border-b-2 w-full"
           >
             <Label className="flex items-start">{labelName}</Label>
-            <div className="flex text-left items-center justify-start gap-2 pb-2">
+            <div className="flex items-center text-left justify-start gap-2">
               {icon}
               <p className="text-sm">{value}</p>
             </div>

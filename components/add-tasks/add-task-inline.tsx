@@ -1,30 +1,30 @@
 "use client";
-
 import { zodResolver } from "@hookform/resolvers/zod";
+import { Dispatch, SetStateAction } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
+import { Button } from "../ui/button";
 
-import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
-  FormLabel,
-  FormMessage,
+  FormMessage
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { toast, useToast } from "@/components/ui/use-toast";
-import { CalendarIcon, Text } from "lucide-react";
-import { Textarea } from "../ui/textarea";
-import { CardFooter } from "../ui/card";
-import { Dispatch, SetStateAction } from "react";
+import { useToast } from "@/components/ui/use-toast";
+import { api } from "@/convex/_generated/api";
+import { Doc, Id } from "@/convex/_generated/dataModel";
 import { cn } from "@/lib/utils";
-import { Calendar } from "../ui/calendar";
-import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
+import { GET_STARTED_PROJECT_ID } from "@/utils";
+import { useAction, useQuery } from "convex/react";
 import { format } from "date-fns";
+import { CalendarIcon, Text } from "lucide-react";
 import moment from "moment";
+import { Calendar } from "../ui/calendar";
+import { CardFooter } from "../ui/card";
+import { Popover, PopoverContent, PopoverTrigger } from "../ui/popover";
 import {
   Select,
   SelectContent,
@@ -32,20 +32,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from "../ui/select";
-import { Doc, Id } from "@/convex/_generated/dataModel";
-import { useAction, useMutation, useQuery } from "convex/react";
-import { api } from "@/convex/_generated/api";
-import { GET_STARTED_PROJECT_ID } from "@/utils";
+import { Textarea } from "../ui/textarea";
 
 const FormSchema = z.object({
   taskName: z.string().min(2, {
-    message: "Task name must be at least 2 characters.",
+    message: "Task Name must be at least 2 characters.",
   }),
   description: z.string().optional().default(""),
   dueDate: z.date({ required_error: "A due date is required" }),
-  priority: z.string().min(1, { message: "Please select a priority" }),
-  projectId: z.string().min(1, { message: "Please select a Project" }),
-  labelId: z.string().min(1, { message: "Please select a Label" }),
+  priority: z.string().min(1, {
+    message: "Please select a Priority",
+  }),
+  projectId: z.string().min(1, {
+    message: "Please select a Project",
+  }),
+  labelId: z.string().min(1, {
+    message: "Please select a Label",
+  }),
 });
 
 export default function AddTaskInline({
@@ -57,13 +60,9 @@ export default function AddTaskInline({
   parentTask?: Doc<"todos">;
   projectId?: Id<"projects">;
 }) {
-  const projectId =
-    myProjectId ||
-    parentTask?.projectId ||
-    (GET_STARTED_PROJECT_ID as Id<"projects">);
 
-  const labelId =
-    parentTask?.labelId || ("k175wr7jgtk993cesb5agrdc7972tvyy" as Id<"labels">);
+  const projectId = myProjectId || parentTask?.projectId || (GET_STARTED_PROJECT_ID as Id<"projects">);
+  const labelId = parentTask?.labelId || "k175wr7jgtk993cesb5agrdc7972tvyy" as Id<"labels">;
   const priority = parentTask?.priority?.toString() || "1";
   const parentId = parentTask?._id;
 
@@ -71,10 +70,7 @@ export default function AddTaskInline({
   const projects = useQuery(api.projects.getProjects) ?? [];
   const labels = useQuery(api.labels.getLabels) ?? [];
 
-  const createASubTodoEmbeddings = useAction(
-    api.subTodos.createSubTodoAndEmbeddings
-  );
-
+  const createSubTodoEmbeddings = useAction(api.subTodos.createSubTodoAndEmbeddings);
   const createTodoEmbeddings = useAction(api.todos.createTodoAndEmbeddings);
 
   const defaultValues = {
@@ -95,45 +91,45 @@ export default function AddTaskInline({
     const { taskName, description, priority, dueDate, projectId, labelId } =
       data;
 
-    if (projectId) {
-      if (parentId) {
-        //subtodo
-        const mutationId = createASubTodoEmbeddings({
-          parentId,
-          taskName,
-          description,
-          priority: parseInt(priority),
-          dueDate: moment(dueDate).valueOf(),
-          projectId: projectId as Id<"projects">,
-          labelId: labelId as Id<"labels">,
-        });
-
-        if (mutationId !== undefined) {
-          toast({
-            title: "🦄 Created a task!",
-            duration: 3000,
+      if (projectId) {
+        if (parentId) {
+          //subtodo
+          const mutationId = createSubTodoEmbeddings({
+            parentId,
+            taskName,
+            description,
+            priority: parseInt(priority),
+            dueDate: moment(dueDate).valueOf(),
+            projectId: projectId as Id<"projects">,
+            labelId: labelId as Id<"labels">,
           });
-          form.reset({ ...defaultValues });
-        }
-      } else {
-        const mutationId = createTodoEmbeddings({
-          taskName,
-          description,
-          priority: parseInt(priority),
-          dueDate: moment(dueDate).valueOf(),
-          projectId: projectId as Id<"projects">,
-          labelId: labelId as Id<"labels">,
-        });
-
-        if (mutationId !== undefined) {
-          toast({
-            title: "🦄 Created a task!",
-            duration: 3000,
+  
+          if (mutationId !== undefined) {
+            toast({
+              title: "🦄 Created a task!",
+              duration: 3000,
+            });
+            form.reset({ ...defaultValues });
+          }
+        } else {
+          const mutationId = createTodoEmbeddings({
+            taskName,
+            description,
+            priority: parseInt(priority),
+            dueDate: moment(dueDate).valueOf(),
+            projectId: projectId as Id<"projects">,
+            labelId: labelId as Id<"labels">,
           });
-          form.reset({ ...defaultValues });
+  
+          if (mutationId !== undefined) {
+            toast({
+              title: "🦄 Created a task!",
+              duration: 3000,
+            });
+            form.reset({ ...defaultValues });
+          }
         }
       }
-    }
   }
   return (
     <div>
@@ -167,7 +163,7 @@ export default function AddTaskInline({
               <FormItem>
                 <FormControl>
                   <div className="flex items-start gap-2">
-                    <Text className="ml-auto h-4 w-4 opacity-50" />
+                    <Text className=" ml-auto h-4 w-4 opacity-50" />
                     <Textarea
                       id="description"
                       placeholder="Description"
@@ -191,7 +187,7 @@ export default function AddTaskInline({
                         <Button
                           variant={"outline"}
                           className={cn(
-                            "flex gap-2 w-[240px] pl-3 text-left font-normal",
+                            " flex gap-2 w-[240px] pl-3 text-left font-normal",
                             !field.value && "text-muted-foreground"
                           )}
                         >
@@ -217,15 +213,13 @@ export default function AddTaskInline({
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="priority"
               render={({ field }) => (
                 <FormItem>
-                  <Select
-                    onValueChange={field.onChange}
-                    defaultValue={priority}
-                  >
+                  <Select onValueChange={field.onChange} defaultValue={priority}>
                     <FormControl>
                       <SelectTrigger>
                         <SelectValue placeholder="Select a Priority" />
@@ -239,11 +233,11 @@ export default function AddTaskInline({
                       ))}
                     </SelectContent>
                   </Select>
-
                   <FormMessage />
                 </FormItem>
               )}
             />
+
             <FormField
               control={form.control}
               name="labelId"
@@ -266,12 +260,12 @@ export default function AddTaskInline({
                       ))}
                     </SelectContent>
                   </Select>
-
                   <FormMessage />
                 </FormItem>
               )}
             />
           </div>
+
           <FormField
             control={form.control}
             name="projectId"
@@ -294,11 +288,11 @@ export default function AddTaskInline({
                     ))}
                   </SelectContent>
                 </Select>
-
                 <FormMessage />
               </FormItem>
             )}
           />
+
           <CardFooter className="flex flex-col lg:flex-row lg:justify-between gap-2 border-t-2 pt-3">
             <div className="w-full lg:w-1/4"></div>
             <div className="flex gap-3 self-end">
@@ -310,7 +304,7 @@ export default function AddTaskInline({
                 Cancel
               </Button>
               <Button className="px-6" type="submit">
-                Add task
+                Add Task
               </Button>
             </div>
           </CardFooter>

@@ -1,9 +1,9 @@
-import { Doc } from "@/convex/_generated/dataModel";
 import clsx from "clsx";
-import AddTaskDialog from "../add-tasks/add-task-dialog";
 import { Checkbox } from "../ui/checkbox";
 import { Dialog, DialogTrigger } from "../ui/dialog";
-import { Calendar, GitBranch, Tag } from "lucide-react";
+import { Doc, Id } from "@/convex/_generated/dataModel";
+import AddTaskDialog from "../add-tasks/add-task-dailog";
+import { Calendar, GitBranch } from "lucide-react";
 import moment from "moment";
 
 function isSubTodo(
@@ -23,8 +23,9 @@ export default function Task({
   handleOnChange: any;
   showDetails?: boolean;
 }) {
-  const { taskName, dueDate } = data;
 
+const { taskName, dueDate } = data;
+  
   return (
     <div
       key={data._id}

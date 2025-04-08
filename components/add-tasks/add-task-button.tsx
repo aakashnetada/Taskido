@@ -5,19 +5,15 @@ import { Doc, Id } from "@/convex/_generated/dataModel";
 
 export const AddTaskWrapper = ({
   parentTask,
-  projectId,
+  projectId
 }: {
   parentTask?: Doc<"todos">;
-  projectId?: Id<"projects">;
+  projectId?: Id<"projects">; 
 }) => {
   const [showAddTask, setShowAddTask] = useState(false);
 
   return showAddTask ? (
-    <AddTaskInline
-      setShowAddTask={setShowAddTask}
-      parentTask={parentTask}
-      projectId={projectId}
-    />
+    <AddTaskInline setShowAddTask={setShowAddTask} parentTask={parentTask} projectId={projectId} />
   ) : (
     <AddTaskButton
       onClick={() => setShowAddTask(true)}

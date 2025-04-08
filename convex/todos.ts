@@ -1,9 +1,8 @@
-import { Id } from "@/convex/_generated/dataModel";
 import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { handleUserId } from "./auth";
 import moment from "moment";
-import { getEmbeddingsWithAI } from "./openai";
+import { getEmbeddingsWithAI } from "./gemini";
 import { api } from "./_generated/api";
 
 export const get = query({
@@ -38,6 +37,24 @@ export const getCompletedTodosByProjectId = query({
   },
 });
 
+export const getCompletedTodosByLabelId = query({
+  args: {
+    labelId: v.id("labels"),
+  },
+  handler: async (ctx, { labelId }) => {
+    const userId = await handleUserId(ctx);
+    if (userId) {
+      return await ctx.db
+        .query("todos")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .filter((q) => q.eq(q.field("labelId"), labelId))
+        .filter((q) => q.eq(q.field("isCompleted"), true))
+        .collect();
+    }
+    return [];
+  },
+});
+
 export const getTodosByProjectId = query({
   args: {
     projectId: v.id("projects"),
@@ -55,6 +72,23 @@ export const getTodosByProjectId = query({
   },
 });
 
+export const getTodosByLabelId = query({
+  args: {
+    labelId: v.id("labels"),
+  },
+  handler: async (ctx, { labelId }) => {
+    const userId = await handleUserId(ctx);
+    if (userId) {
+      return await ctx.db
+        .query("todos")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .filter((q) => q.eq(q.field("labelId"), labelId))
+        .collect();
+    }
+    return [];
+  },
+});
+
 export const getInCompleteTodosByProjectId = query({
   args: {
     projectId: v.id("projects"),
@@ -66,6 +100,24 @@ export const getInCompleteTodosByProjectId = query({
         .query("todos")
         .filter((q) => q.eq(q.field("userId"), userId))
         .filter((q) => q.eq(q.field("projectId"), projectId))
+        .filter((q) => q.eq(q.field("isCompleted"), false))
+        .collect();
+    }
+    return [];
+  },
+});
+
+export const getInCompleteTodosByLabelId = query({
+  args: {
+    labelId: v.id("labels"),
+  },
+  handler: async (ctx, { labelId }) => {
+    const userId = await handleUserId(ctx);
+    if (userId) {
+      return await ctx.db
+        .query("todos")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .filter((q) => q.eq(q.field("labelId"), labelId))
         .filter((q) => q.eq(q.field("isCompleted"), false))
         .collect();
     }
@@ -93,45 +145,23 @@ export const getTodosTotalByProjectId = query({
   },
 });
 
-export const todayTodos = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await handleUserId(ctx);
-
-    if (userId) {
-      const todayStart = moment().startOf("day");
-      const todayEnd = moment().endOf("day");
-
-      return await ctx.db
-        .query("todos")
-        .filter((q) => q.eq(q.field("userId"), userId))
-        .filter(
-          (q) =>
-            q.gte(q.field("dueDate"), todayStart.valueOf()) &&
-            q.lte(todayEnd.valueOf(), q.field("dueDate"))
-        )
-        .collect();
-    }
-    return [];
+export const getTodosTotalByLabelId = query({
+  args: {
+    labelId: v.id("labels"),
   },
-});
-
-export const overdueTodos = query({
-  args: {},
-  handler: async (ctx) => {
+  handler: async (ctx, { labelId }) => {
     const userId = await handleUserId(ctx);
-
     if (userId) {
-      const todayStart = new Date();
-      todayStart.setHours(0, 0, 0, 0);
-
-      return await ctx.db
+      const todos = await ctx.db
         .query("todos")
         .filter((q) => q.eq(q.field("userId"), userId))
-        .filter((q) => q.lt(q.field("dueDate"), todayStart.getTime()))
+        .filter((q) => q.eq(q.field("labelId"), labelId))
+        .filter((q) => q.eq(q.field("isCompleted"), true))
         .collect();
+
+      return todos?.length || 0;
     }
-    return [];
+    return 0;
   },
 });
 
@@ -197,6 +227,72 @@ export const unCheckATodo = mutation({
   },
 });
 
+export const todayTodos = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await handleUserId(ctx);
+
+    if (userId) {
+      const todayStart = moment().startOf("day");
+      const todayEnd = moment().endOf("day");
+
+      return await ctx.db
+        .query("todos")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .filter(
+          (q) =>
+            q.gte(q.field("dueDate"), todayStart.valueOf()) &&
+            q.lte(todayEnd.valueOf(), q.field("dueDate"))
+        )
+        .collect();
+    }
+    return [];
+  },
+});
+
+export const overdueTodos = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await handleUserId(ctx);
+
+    if (userId) {
+      const todayStart = new Date();
+      todayStart.setHours(0, 0, 0, 0);
+
+      return await ctx.db
+        .query("todos")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .filter((q) => q.lt(q.field("dueDate"), todayStart.getTime()))
+        .collect();
+    }
+    return [];
+  },
+});
+
+export const groupTodosByDate = query({
+  args: {},
+  handler: async (ctx) => {
+    const userId = await handleUserId(ctx);
+
+    if (userId) {
+      const todos = await ctx.db
+        .query("todos")
+        .filter((q) => q.eq(q.field("userId"), userId))
+        .filter((q) => q.gt(q.field("dueDate"), new Date().getTime()))
+        .collect();
+
+      const groupedTodos = todos.reduce<any>((acc, todo) => {
+        const dueDate = new Date(todo.dueDate).toDateString();
+        acc[dueDate] = (acc[dueDate] || []).concat(todo);
+        return acc;
+      }, {});
+
+      return groupedTodos;
+    }
+    return [];
+  },
+}); 
+
 export const createATodo = mutation({
   args: {
     taskName: v.string(),
@@ -249,6 +345,7 @@ export const createTodoAndEmbeddings = action({
   handler: async (
     ctx,
     { taskName, description, priority, dueDate, projectId, labelId }
+    
   ) => {
     const embedding = await getEmbeddingsWithAI(taskName);
     await ctx.runMutation(api.todos.createATodo, {
@@ -257,33 +354,9 @@ export const createTodoAndEmbeddings = action({
       priority,
       dueDate,
       projectId,
-      labelId,
+      labelId, 
       embedding,
     });
-  },
-});
-
-export const groupTodosByDate = query({
-  args: {},
-  handler: async (ctx) => {
-    const userId = await handleUserId(ctx);
-
-    if (userId) {
-      const todos = await ctx.db
-        .query("todos")
-        .filter((q) => q.eq(q.field("userId"), userId))
-        .filter((q) => q.gt(q.field("dueDate"), new Date().getTime()))
-        .collect();
-
-      const groupedTodos = todos.reduce<any>((acc, todo) => {
-        const dueDate = new Date(todo.dueDate).toDateString();
-        acc[dueDate] = (acc[dueDate] || []).concat(todo);
-        return acc;
-      }, {});
-
-      return groupedTodos;
-    }
-    return [];
   },
 });
 

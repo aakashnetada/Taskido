@@ -22,10 +22,10 @@ export default function SuggestMissingTasks({
     useState(false);
 
   const suggestMissingTasks =
-    useAction(api.openai.suggestMissingItemsWithAi) || [];
+    useAction(api.gemini.suggestMissingItemsWithAi) || [];
 
   const suggestMissingSubTasks =
-    useAction(api.openai.suggestMissingSubItemsWithAi) || [];
+    useAction(api.gemini.suggestMissingSubItemsWithAi) || [];
 
   const handleMissingTasks = async () => {
     setIsLoadingSuggestMissingTasks(true);
@@ -61,7 +61,7 @@ export default function SuggestMissingTasks({
       <Button
         variant={"outline"}
         disabled={isLoadingSuggestMissingTasks}
-        onClick={isSubTask ? handleMissingSubTasks : handleMissingTasks}
+        onClick={isSubTask ? handleMissingSubTasks :handleMissingTasks}
       >
         {isLoadingSuggestMissingTasks ? (
           <div className="flex gap-2">

@@ -11,35 +11,35 @@ import {
   import { useForm } from "react-hook-form";
   import { useToast } from "../ui/use-toast";
   import { Id } from "@/convex/_generated/dataModel";
-  import { GET_STARTED_PROJECT_ID } from "@/utils";
+  import { AI_LABEL_ID, PERSONAL_LABEL_ID } from "@/utils";
   
-  export default function DeleteProject({
-    projectId,
+  export default function DeleteLabel({
+    labelId,
   }: {
-    projectId: Id<"projects">;
+    labelId: Id<"labels">;
   }) {
     const form = useForm({ defaultValues: { name: "" } });
     const { toast } = useToast();
     const router = useRouter();
   
-    const deleteProject = useAction(api.projects.deleteProjectAndItsTasks);
+    const deleteLabel = useAction(api.labels.deleteLabelAndItsTasks);
   
     const onSubmit = async () => {
-      if (projectId === GET_STARTED_PROJECT_ID) {
+      if (labelId ===  PERSONAL_LABEL_ID || labelId === AI_LABEL_ID) {
         toast({
           title: "🤗 Just a reminder",
-          description: "System projects are protected from deletion.",
+          description: "System labels are protected from deletion.",
           duration: 3000,
         });
       } else {
-        const deleteTaskId = await deleteProject({ projectId });
+        const deleteTaskId = await deleteLabel({ labelId });
   
         if (deleteTaskId !== undefined) {
           toast({
-            title: "🗑️ Successfully deleted a project",
+            title: "🗑️ Successfully deleted a label",
             duration: 3000,
           });
-          router.push(`/loggedin/projects`);
+          router.push(`/loggedin/filter-labels`);
         }
       }
     };
@@ -54,7 +54,7 @@ import {
             <form onSubmit={form.handleSubmit(onSubmit)}>
               <button type="submit" className="flex gap-2">
                 <Trash2 className="w-5 h-5 rotate-45 text-foreground/40" /> Delete
-                Project
+                Label
               </button>
             </form>
           </DropdownMenuLabel>

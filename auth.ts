@@ -15,14 +15,13 @@ if (process.env.NEXT_PUBLIC_CONVEX_URL === undefined) {
   throw new Error("Missing NEXT_PUBLIC_CONVEX_URL");
 }
 
-const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_URL!.replace(
+const CONVEX_SITE_URL = process.env.NEXT_PUBLIC_CONVEX_URL.replace(
   /.cloud$/,
   ".site"
 );
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
   providers: [
-    //google oauth
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET,
@@ -36,7 +35,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         process.env.CONVEX_AUTH_PRIVATE_KEY!,
         "RS256"
       );
-
       const convexToken = await new SignJWT({
         sub: session.userId,
       })
@@ -46,7 +44,6 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
         .setAudience("convex")
         .setExpirationTime("1h")
         .sign(privateKey);
-
       return { ...session, convexToken };
     },
   },

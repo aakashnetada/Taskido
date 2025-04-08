@@ -1,4 +1,5 @@
-import { Menu } from "lucide-react";
+"use client";
+import { Hash, Menu } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -15,7 +16,12 @@ import Image from "next/image";
 import SearchForm from "./search-form";
 import UserProfile from "./user-profile";
 
-import todovexLogo from "@/public/logo/logo.svg";
+import todoooLogo from "@/public/logo.svg";
+import { useEffect, useState } from "react";
+import { Doc } from "@/convex/_generated/dataModel";
+import { useQuery } from "convex/react";
+import { api } from "@/convex/_generated/api";
+import AddProjectDialog from "../projects/add-project-dialog";
 
 export default function MobileNav({
   navTitle = "",
@@ -24,6 +30,25 @@ export default function MobileNav({
   navTitle?: string;
   navLink?: string;
 }) {
+
+  const projectList = useQuery(api.projects.getProjects);
+  const [navItems, setNavItems] = useState([...primaryNavItems]);
+
+  const renderItems = (projectList: Array<Doc<"projects">>) => {
+    return projectList.map(({ _id, name }, idx) => ({
+      name,
+      link: `/loggedin/projects/${_id.toString()}`,
+      icon: <Hash className="w-4 h-4" />,
+    }));
+  };
+
+  useEffect(() => {
+    if (projectList) {
+      const projectItems = renderItems(projectList);
+      setNavItems([...primaryNavItems, ...projectItems]);
+    }
+  }, [projectList]);
+
   return (
     <header className="flex h-14 items-center gap-4 border-b bg-muted/40 px-4 lg:h-[60px] lg:px-6">
       <Sheet>
@@ -47,10 +72,23 @@ export default function MobileNav({
                 {name}
               </Link>
             ))}
-
+            {/* My Projects Section with AddProjectDialog */}
             <div className="flex items-center mt-6 mb-2">
               <p className="flex flex-1 text-base">My Projects</p>
+              <AddProjectDialog />
             </div>
+
+            {/* Render Project Links */}
+            {projectList?.map(({ _id, name }) => (
+              <Link
+                key={_id}
+                href={`/loggedin/projects/${_id.toString()}`}
+                className="mx-[-0.65rem] flex items-center gap-4 rounded-xl px-3 py-2  hover:text-foreground"
+              >
+                <Hash className="w-4 h-4" />
+                {name}
+              </Link>
+            ))}
           </nav>
           <div className="mt-auto">
             <Card>
@@ -81,8 +119,8 @@ export default function MobileNav({
         <div className="place-content-center w-full flex-1">
           <SearchForm />
         </div>
-        <div className="place-content-center w-12 h-12 lg:w-16 lg:h-20">
-          <Image alt="logo" src={todovexLogo} />
+        <div className="place-content-center w-16 h-16 lg:w-24 lg:h-24">
+          <Image alt="logo" src={todoooLogo} />
         </div>
       </div>
     </header>

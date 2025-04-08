@@ -1,6 +1,6 @@
 import { v } from "convex/values";
 import { action, internalQuery } from "./_generated/server";
-import { getEmbeddingsWithAI } from "./openai";
+import { getEmbeddingsWithAI } from "./gemini";
 import { handleUserId } from "./auth";
 import { internal } from "./_generated/api";
 

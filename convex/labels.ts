@@ -1,6 +1,8 @@
-import { query, mutation } from "./_generated/server";
+import { query, mutation, action } from "./_generated/server";
 import { v } from "convex/values";
 import { handleUserId } from "./auth";
+import { api } from "./_generated/api";
+import { Doc } from "./_generated/dataModel";
 
 export const getLabels = query({
   args: {},
@@ -38,27 +40,53 @@ export const getLabelByLabelId = query({
   },
 });
 
-export const createALabel = mutation({
+export const deleteLabel = mutation({
   args: {
-    name: v.string(),
+    labelId: v.id("labels"),
   },
-  handler: async (ctx, { name }) => {
+  handler: async (ctx, { labelId }) => {
     try {
       const userId = await handleUserId(ctx);
       if (userId) {
-        const newTaskId = await ctx.db.insert("labels", {
-          userId,
-          name,
-          type: "user",
-        });
-        return newTaskId;
+        const taskId = await ctx.db.delete(labelId);
+        //query todos and map through them and delete
+
+        return taskId;
       }
 
       return null;
     } catch (err) {
-      console.log("Error occurred during createALabel mutation", err);
+      console.log("Error occurred during deleteLabel mutation", err);
 
       return null;
+    }
+  },
+});
+
+export const deleteLabelAndItsTasks = action({
+  args: {
+    labelId: v.id("labels"),
+  },
+  handler: async (ctx, { labelId }) => {
+    try {
+      const allTasks = await ctx.runQuery(api.todos.getTodosByLabelId, {
+        labelId,
+      });
+
+      const promises = Promise.allSettled(
+        allTasks.map(async (task: Doc<"todos">) =>
+          ctx.runMutation(api.todos.deleteATodo, {
+            taskId: task._id,
+          })
+        )
+      );
+      const statuses = await promises;
+
+      await ctx.runMutation(api.labels.deleteLabel, {
+        labelId,
+      });
+    } catch (err) {
+      console.error("Error deleting tasks and labels", err);
     }
   },
 });
