@@ -188,7 +188,7 @@ export const suggestMissingItemsWithAi = action({
 
       if (taskName && description) {
         const embedding = await getEmbeddingsWithAI(taskName);
-        const AI_LABEL_ID = "k574vq4y8w9t2qv80kcfktv6w96z1dad";
+        const AI_LABEL_ID = "k17amkrp6rc8ss2jy0erf4hbxn72vfma";
 
         await ctx.runMutation(api.todos.createATodo, {
           taskName,
