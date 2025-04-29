@@ -15,8 +15,6 @@ import { primaryNavItems } from "@/utils";
 import Image from "next/image";
 import SearchForm from "./search-form";
 import UserProfile from "./user-profile";
-
-import todoooLogo from "@/public/logo.svg";
 import { useEffect, useState } from "react";
 import { Doc } from "@/convex/_generated/dataModel";
 import { useQuery } from "convex/react";
@@ -103,9 +101,6 @@ export default function MobileNav({
         </div>
         <div className="place-content-center w-full flex-1">
           <SearchForm />
-        </div>
-        <div className="place-content-center w-16 h-16 lg:w-24 lg:h-24">
-          <Image alt="logo" src={todoooLogo} />
         </div>
       </div>
     </header>
