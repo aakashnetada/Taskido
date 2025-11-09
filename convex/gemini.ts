@@ -6,7 +6,7 @@ import { Id } from "./_generated/dataModel";
 const { GoogleGenerativeAI } = require("@google/generative-ai");
 
 const apiKey = new GoogleGenerativeAI(process.env.GEMINI_AI_KEY);
-const gemini = apiKey.getGenerativeModel({ model: "gemini-1.5-flash",generationConfig: { responseMimeType: "application/json" } });
+const gemini = apiKey.getGenerativeModel({ model: "gemini-2.5-flash",generationConfig: { responseMimeType: "application/json" } });
 
 export const getEmbeddingsWithAI = async (searchText: string) => {
   if (!apiKey) {
