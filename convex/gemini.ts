@@ -13,7 +13,7 @@ export const getEmbeddingsWithAI = async (searchText: string) => {
     throw new Error("Gemini AI Key is not defined");
   }
 
-  const model = apiKey.getGenerativeModel({ model: "text-embedding-004" });
+  const model = apiKey.getGenerativeModel({ model: "gemini-embedding-001" });
   const text = searchText;
   const result = await model.embedContent(text);
 
